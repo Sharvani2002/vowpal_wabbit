@@ -201,23 +201,35 @@ void parser::parse_namespaces(VW::workspace* all, example* ae, const Namespace* 
   auto& fs = ae->feature_space[index];
 
   if (hash_found) { fs.start_ns_extent(hash); }
-  for (const auto& feature : *(ns->features()))
-  { parse_features(all, fs, feature, (all->audit || all->hash_inv) ? ns->name() : nullptr); }
+  
+    if(ns->name_features() != nullptr)
+      parse_name_features(all, fs, ns, (all->audit || all->hash_inv) ? ns->name() : nullptr);
+    else
+      parse_hash_features(all, fs, ns);
+  
   if (hash_found) { fs.end_ns_extent(); }
 }
 
-void parser::parse_features(VW::workspace* all, features& fs, const Feature* feature, const flatbuffers::String* ns)
+void parser::parse_name_features(VW::workspace* all, features& fs, const Namespace* ns, const flatbuffers::String* ns_name)
 {
-  if (flatbuffers::IsFieldPresent(feature, Feature::VT_NAME))
+  auto feature_name = (ns->name_features()->name_features()->feature_names())->begin();
+  auto feature_value = (ns->name_features()->feature_values())->begin();
+  for (;feature_value != (ns->name_features()->feature_values())->end(); *feature_value++, *feature_name++)
   {
-    uint64_t word_hash = all->example_parser->hasher(feature->name()->c_str(), feature->name()->size(), _c_hash);
-    fs.push_back(feature->value(), word_hash);
-    if ((all->audit || all->hash_inv) && ns != nullptr)
-    { fs.space_names.push_back(audit_strings(ns->c_str(), feature->name()->c_str())); }
+    uint64_t word_hash = all->example_parser->hasher(feature_name->c_str(), feature_name->size(), _c_hash);
+    fs.push_back(*feature_value, word_hash);
+    if (ns_name != nullptr)
+    { fs.space_names.push_back(audit_strings(ns_name->c_str(), feature_name->c_str())); }
   }
-  else
+}
+
+void parser::parse_hash_features(VW::workspace* all, features& fs,  const Namespace* ns)
+{
+  auto feature_hash = (ns->hash_features()->feature_hashes())->begin();
+  auto feature_value = (ns->hash_features()->feature_values())->begin();
+  for (;feature_value != (ns->hash_features()->feature_values())->end() && feature_hash != (ns->hash_features()->feature_hashes())->end(); *feature_value++, *feature_hash++)
   {
-    fs.push_back(feature->value(), feature->hash());
+  fs.push_back(*feature_value, *feature_hash);
   }
 }
 

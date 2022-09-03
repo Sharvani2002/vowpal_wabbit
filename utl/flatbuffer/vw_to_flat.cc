@@ -68,12 +68,14 @@ void to_flat::write_to_file(bool collection, bool is_multiline, MultiExampleBuil
     {
       write_collection_to_file(is_multiline, outfile);
       _collection_count = 0;
-      _share_examples.clear();  // can't share between collections
+      _share_examples_namespace_feature_names.clear();  // can't share between collections
+      _share_examples_namespace_feature_hashes.clear();  
     }
   }
   else
   {
-    _share_examples.clear();  // not in collection mode, there is not sharing
+    _share_examples_namespace_feature_names.clear();  // not in collection mode, there is not sharing
+    _share_examples_namespace_feature_hashes.clear();
     if (is_multiline)
     {
       auto multi_ex = multi_ex_builder.to_flat_example(_builder);
@@ -291,10 +293,14 @@ void to_flat::create_no_label(VW::example* v, ExampleBuilder& ex_builder)
   ex_builder.label = VW::parsers::flatbuffer::Createno_label(_builder, (uint8_t)'\000').Union();
 }
 
-flatbuffers::Offset<VW::parsers::flatbuffer::Namespace> to_flat::create_namespace(
+flatbuffers::Offset<VW::parsers::flatbuffer::Namespace_feature_names> to_flat::create_namespace_feature_names(
     features::audit_iterator begin, features::audit_iterator end, VW::namespace_index index, uint64_t hash, bool audit)
 {
-  std::vector<flatbuffers::Offset<VW::parsers::flatbuffer::Feature>> fts;
+  // std::vector<flatbuffers::Offset<VW::parsers::flatbuffer::Feature_names>> ft_names;
+  std::vector<flatbuffers::Offset<flatbuffers::String>> feature_names;
+  std::vector<float> feature_values;
+  // std::vector<uint64_t>* feature_hashes; 
+
   std::stringstream ss;
   ss << index;
 
@@ -303,11 +309,12 @@ flatbuffers::Offset<VW::parsers::flatbuffer::Namespace> to_flat::create_namespac
 
   std::string s = ss.str();
   uint64_t refid = VW::uniform_hash(s.c_str(), s.size(), 0);
-  const auto find_ns_offset = _share_examples.find(refid);
+  const auto find_ns_offset = _share_examples_namespace_feature_names.find(refid);
 
-  if (find_ns_offset == _share_examples.end())
+  if (find_ns_offset == _share_examples_namespace_feature_names.end())
   {
-    flatbuffers::Offset<VW::parsers::flatbuffer::Namespace> namespace_offset;
+    flatbuffers::Offset<VW::parsers::flatbuffer::Namespace_feature_names> namespace_offset;
+
     // new namespace
     if (audit)
     {
@@ -315,22 +322,91 @@ flatbuffers::Offset<VW::parsers::flatbuffer::Namespace> to_flat::create_namespac
       for (auto it = begin; it != end; ++it)
       {
         ns_name = it.audit()->ns;
-        fts.push_back(
-            VW::parsers::flatbuffer::CreateFeatureDirect(_builder, it.audit()->name.c_str(), it.value(), it.index()));
+        
+        (feature_names).push_back(_builder.CreateString(it.audit()->name.c_str()));
+        (feature_values).push_back(it.value());
+        // (*feature_hashes).push_back(it.index());
       }
-      namespace_offset = VW::parsers::flatbuffer::CreateNamespaceDirect(_builder, ns_name.c_str(), index, &fts, hash);
+      namespace_offset = VW::parsers::flatbuffer::CreateNamespace_feature_namesDirect(_builder, ns_name.c_str(), index, hash, &feature_names, &feature_values);
     }
     else
     {
       for (auto it = begin; it != end; ++it)
-      { fts.push_back(VW::parsers::flatbuffer::CreateFeatureDirect(_builder, nullptr, it.value(), it.index())); }
-      namespace_offset = VW::parsers::flatbuffer::CreateNamespaceDirect(_builder, nullptr, index, &fts, hash);
+      {
+        (feature_names).push_back(_builder.CreateString("")); // the feature_name would be ""
+        //DOUBT: Should this be just 0? (intended to be nullptr)
+        // (*feature_names).push_back(nullptr);
+        // (*feature_names).push_back(_builder.CreateString(nullptr));
+        (feature_values).push_back(it.value());
+        // (*feature_hashes).push_back(it.index());
+      }
+      
+      namespace_offset = VW::parsers::flatbuffer::CreateNamespace_feature_namesDirect(_builder, nullptr, index, hash, &feature_names, &feature_values);
+    
     }
-    _share_examples[refid] = namespace_offset;
+    _share_examples_namespace_feature_names[refid] = namespace_offset;
   }
 
-  return _share_examples[refid];
+  return _share_examples_namespace_feature_names[refid];
 }
+
+flatbuffers::Offset<VW::parsers::flatbuffer::Namespace_feature_hashes> to_flat::create_namespace_feature_hashes(
+    features::audit_iterator begin, features::audit_iterator end, VW::namespace_index index, uint64_t hash, bool audit)
+{
+  // std::vector<flatbuffers::Offset<VW::parsers::flatbuffer::Feature_names>> ft_names;
+  // std::vector<flatbuffers::Offset<flatbuffers::String>>* feature_names;
+  std::vector<float> feature_values;
+  std::vector<uint64_t> feature_hashes; 
+
+  std::stringstream ss;
+  ss << index;
+
+  for (auto it = begin; it != end; ++it) { ss << it.index() << it.value(); }
+  ss << ":" << hash;
+
+  std::string s = ss.str();
+  uint64_t refid = VW::uniform_hash(s.c_str(), s.size(), 0);
+  const auto find_ns_offset = _share_examples_namespace_feature_hashes.find(refid);
+
+  if (find_ns_offset == _share_examples_namespace_feature_hashes.end())
+  {
+    flatbuffers::Offset<VW::parsers::flatbuffer::Namespace_feature_hashes> namespace_offset;
+
+    
+    // new namespace
+    if (audit)
+    {
+      std::string ns_name;
+      for (auto it = begin; it != end; ++it)
+      {
+        ns_name = it.audit()->ns;
+        
+        // (*feature_names).push_back(_builder.CreateString(it.audit()->name.c_str()));
+        (feature_values).push_back(it.value());
+        (feature_hashes).push_back(it.index());
+      }
+      namespace_offset = VW::parsers::flatbuffer::CreateNamespace_feature_hashesDirect(_builder, ns_name.c_str(), index, hash, &feature_values, &feature_hashes);
+    }
+    else
+    {
+      for (auto it = begin; it != end; ++it)
+      {
+        // (*feature_names).push_back(_builder.CreateString(0,0)); // the feature_name would be ""
+        //DOUBT: Should this be just 0? (intended to be nullptr)
+        // (*feature_names).push_back(nullptr);
+        // (*feature_names).push_back(_builder.CreateString(nullptr));
+        (feature_values).push_back(it.value());
+        (feature_hashes).push_back(it.index());
+      }
+      namespace_offset = VW::parsers::flatbuffer::CreateNamespace_feature_hashesDirect(_builder, nullptr, index, hash, &feature_values, &feature_hashes);
+    
+    }
+    _share_examples_namespace_feature_hashes[refid] = namespace_offset;
+  }
+
+  return _share_examples_namespace_feature_hashes[refid];
+}
+
 
 std::vector<VW::namespace_extent> unflatten_namespace_extents_dont_skip(
     const std::vector<std::pair<bool, uint64_t>>& extents)
@@ -415,7 +491,8 @@ void to_flat::convert_txt_to_flat(VW::workspace& all)
         for (auto& j : fs.indices) { j /= multiplier; }
       }
     }
-    std::vector<flatbuffers::Offset<VW::parsers::flatbuffer::Namespace>> namespaces;
+    std::vector<flatbuffers::Offset<VW::parsers::flatbuffer::Namespace_feature_names>> namespace_feature_names;
+    std::vector<flatbuffers::Offset<VW::parsers::flatbuffer::Namespace_feature_hashes>> namespace_feature_hashes;
     for (const VW::namespace_index& ns : ae->indices)
     {
       // Skip over constant namespace as that will be assigned while reading flatbuffer again
@@ -430,9 +507,20 @@ void to_flat::convert_txt_to_flat(VW::workspace& all)
       for (const auto& extent : unflattened_with_ranges_that_dont_have_extents)
       {
         // The extent hash for a non-hash-extent will be 0, which is the same as the field no existing to flatbuffers.
-        auto created_ns = create_namespace(ae->feature_space[ns].audit_begin() + extent.begin_index,
-            ae->feature_space[ns].audit_begin() + extent.end_index, ns, extent.hash, all.audit || all.hash_inv);
-        namespaces.push_back(created_ns);
+        auto it = ae->feature_space[ns].audit_begin() + extent.begin_index;
+        if( it.audit() != nullptr && it.audit()->name.c_str() != nullptr)
+        {
+          auto created_ns = to_flat::create_namespace_feature_names(ae->feature_space[ns].audit_begin() + extent.begin_index,
+          ae->feature_space[ns].audit_begin() + extent.end_index, ns, extent.hash, all.audit || all.hash_inv);
+          namespace_feature_names.push_back(created_ns);
+        }
+        else{
+          auto created_ns = to_flat::create_namespace_feature_hashes(ae->feature_space[ns].audit_begin() + extent.begin_index,
+
+          // auto created_ns = create_namespace_feature_hashes(ae->feature_space[ns].audit_begin() + extent.begin_index,
+          ae->feature_space[ns].audit_begin() + extent.end_index, ns, extent.hash, all.audit || all.hash_inv);
+          namespace_feature_hashes.push_back(created_ns);
+        }
       }
     }
     std::string tag(ae->tag.begin(), ae->tag.size());
@@ -447,7 +535,11 @@ void to_flat::convert_txt_to_flat(VW::workspace& all)
               (all.example_parser->lbl_parser.label_type == VW::label_type_t::slates &&
                   ae->l.slates.type == VW::slates::example_type::slot)))
       {
-        ex_builder.namespaces.insert(ex_builder.namespaces.end(), namespaces.begin(), namespaces.end());
+        // ex_builder.namespaces.insert(ex_builder.namespaces.end(), namespaces.begin(), namespaces.end());
+        if(namespace_feature_names.size())
+        ex_builder.namespace_feature_names.insert(ex_builder.namespace_feature_names.end(), namespace_feature_names.begin(), namespace_feature_names.end());
+        if(namespace_feature_hashes.size())
+        ex_builder.namespace_feature_hashes.insert(ex_builder.namespace_feature_hashes.end(), namespace_feature_hashes.begin(), namespace_feature_hashes.end());
         ex_builder.is_newline = ae->is_newline;
         ex_builder.tag = tag;
         multi_ex_builder.examples.push_back(ex_builder);
@@ -464,7 +556,12 @@ void to_flat::convert_txt_to_flat(VW::workspace& all)
     }
     else
     {
-      ex_builder.namespaces.insert(ex_builder.namespaces.end(), namespaces.begin(), namespaces.end());
+      // ex_builder.namespaces.insert(ex_builder.namespaces.end(), namespaces.begin(), namespaces.end());
+      if(namespace_feature_names.size())
+      ex_builder.namespace_feature_names.insert(ex_builder.namespace_feature_names.end(), namespace_feature_names.begin(), namespace_feature_names.end());
+      if(namespace_feature_hashes.size())
+      ex_builder.namespace_feature_hashes.insert(ex_builder.namespace_feature_hashes.end(), namespace_feature_hashes.begin(), namespace_feature_hashes.end());
+      
       ex_builder.is_newline = ae->is_newline;
       ex_builder.tag = tag;
       _examples++;

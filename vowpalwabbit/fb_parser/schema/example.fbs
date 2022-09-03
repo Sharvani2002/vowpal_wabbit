@@ -1,20 +1,10 @@
 namespace VW.parsers.flatbuffer;
 
-table Feature {
-  name:string;
-  value:float;
-  hash:uint64;
-}
-
-table Namespace {
-  name:string;
-  /// The index of the namespace which is either the first character of the namespace
-  /// string or a reserved namespace identifier.
-  hash:uint8;
-  features:[Feature];
-  /// The 64 bit hash of the full namespace string.
-  full_hash:uint64;
-}
+// table Feature {
+//   name:string;
+//   value:float;
+//   hash:uint64;
+// }
 
 table SimpleLabel {
   label:float;
@@ -104,8 +94,30 @@ table ContinuousLabel {
 
 union Label {SimpleLabel, CBLabel, CCBLabel, MultiClass, MultiLabel, CB_EVAL_Label, CS_Label, no_label, Slates_Label, ContinuousLabel}
 
+struct Name_features{
+  feature_names:[string];
+  feature_values:[float];
+}
+
+struct Hash_features{
+  feature_hashes:[uint64];
+  feature_values:[float];
+}
+
+table Namespace {
+  name:string;
+  /// The index of the namespace which is either the first character of the namespace
+  /// string or a reserved namespace identifier.
+  hash:uint8;
+  /// The 64 bit hash of the full namespace string.
+  full_hash:uint64;
+  name_features: Name_features;
+  hash_features: Hash_features;
+}
+
+
 table Example {
-  namespaces:[Namespace];
+  namespaces: [Namespace];
   label:Label;
   tag:string;
   is_newline:bool = false;

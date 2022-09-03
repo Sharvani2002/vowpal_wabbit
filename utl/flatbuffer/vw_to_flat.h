@@ -14,7 +14,8 @@ VW_WARNING_STATE_POP
 
 struct ExampleBuilder
 {
-  std::vector<flatbuffers::Offset<VW::parsers::flatbuffer::Namespace>> namespaces;
+  std::vector<flatbuffers::Offset<VW::parsers::flatbuffer::Namespace_feature_names>> namespace_feature_names;
+  std::vector<flatbuffers::Offset<VW::parsers::flatbuffer::Namespace_feature_hashes>> namespace_feature_hashes;
   VW::parsers::flatbuffer::Label label_type = VW::parsers::flatbuffer::Label_NONE;
   flatbuffers::Offset<void> label = 0;
   std::string tag;
@@ -23,14 +24,15 @@ struct ExampleBuilder
   flatbuffers::Offset<VW::parsers::flatbuffer::Example> to_flat_example(flatbuffers::FlatBufferBuilder& builder)
   {
     auto ex = VW::parsers::flatbuffer::CreateExampleDirect(
-        builder, &namespaces, label_type, label, tag.empty() ? nullptr : tag.c_str(), is_newline);
+        builder, &namespace_feature_names, &namespace_feature_hashes, label_type, label, tag.empty() ? nullptr : tag.c_str(), is_newline);
     clear();
     return ex;
   }
 
   void clear()
   {
-    namespaces.clear();
+    namespace_feature_names.clear();
+    namespace_feature_hashes.clear();
     label_type = VW::parsers::flatbuffer::Label_NONE;
     label = 0;
     tag.clear();
@@ -65,7 +67,9 @@ private:
   flatbuffers::FlatBufferBuilder _builder;
   std::vector<flatbuffers::Offset<VW::parsers::flatbuffer::Example>> _example_collection;
   std::vector<flatbuffers::Offset<VW::parsers::flatbuffer::MultiExample>> _multi_example_collection;
-  std::map<uint64_t, flatbuffers::Offset<VW::parsers::flatbuffer::Namespace>> _share_examples;
+  // std::map<uint64_t, flatbuffers::Offset<VW::parsers::flatbuffer::Namespace>> _share_examples;
+  std::map<uint64_t, flatbuffers::Offset<VW::parsers::flatbuffer::Namespace_feature_names>> _share_examples_namespace_feature_names;
+  std::map<uint64_t, flatbuffers::Offset<VW::parsers::flatbuffer::Namespace_feature_hashes>> _share_examples_namespace_feature_hashes;
   size_t _collection_count = 0;
   uint32_t _multi_ex_index = 0;
   int _examples = 0;
@@ -85,6 +89,13 @@ private:
   void write_to_file(bool collection, bool is_multiline, MultiExampleBuilder& multi_ex_builder,
       ExampleBuilder& ex_builder, std::ofstream& outfile);
 
-  flatbuffers::Offset<VW::parsers::flatbuffer::Namespace> create_namespace(features::audit_iterator begin,
+  // flatbuffers::Offset<VW::parsers::flatbuffer::Namespace> create_namespace(features::audit_iterator begin,
+  //     features::audit_iterator end, VW::namespace_index index, uint64_t hash, bool audit);
+public:
+  flatbuffers::Offset<VW::parsers::flatbuffer::Namespace_feature_names> create_namespace_feature_names(features::audit_iterator begin,
       features::audit_iterator end, VW::namespace_index index, uint64_t hash, bool audit);
+  flatbuffers::Offset<VW::parsers::flatbuffer::Namespace_feature_hashes> create_namespace_feature_hashes(features::audit_iterator begin,
+      features::audit_iterator end, VW::namespace_index index, uint64_t hash, bool audit);
+
+
 };
