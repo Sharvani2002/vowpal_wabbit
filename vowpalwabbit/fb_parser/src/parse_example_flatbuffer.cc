@@ -201,25 +201,44 @@ void parser::parse_namespaces(VW::workspace* all, example* ae, const Namespace* 
   auto& fs = ae->feature_space[index];
 
   if (hash_found) { fs.start_ns_extent(hash); }
-  for (const auto& feature : *(ns->features()))
-  { parse_features(all, fs, feature, (all->audit || all->hash_inv) ? ns->name() : nullptr); }
+
+  auto feature_value = (ns->feature_values())->begin();
+  auto feature_name = (ns->feature_names())->begin();
+  auto feature_hash = (ns->feature_hashes())->begin();
+  for (;feature_value != (ns->feature_values())->end() && feature_hash != (ns->feature_hashes())->end(); *feature_value++, *feature_name++, *feature_hash++)
+  {
+      if(*feature_name != nullptr)
+      {
+        uint64_t word_hash = all->example_parser->hasher(feature_name->c_str(), feature_name->size(), _c_hash);
+        auto DEBUG_f_name = feature_name->c_str();
+        auto DEBUG_f_name2 = *feature_name->c_str();
+        fs.push_back(*feature_value, word_hash);
+        if ((all->audit || all->hash_inv) && ns->name() != nullptr)
+        { fs.space_names.push_back(audit_strings(ns->name()->c_str(), feature_name->c_str())); }
+      }
+    else
+    {
+      fs.push_back(*feature_value, *feature_hash);
+    } 
+  }
+
   if (hash_found) { fs.end_ns_extent(); }
 }
 
-void parser::parse_features(VW::workspace* all, features& fs, const Feature* feature, const flatbuffers::String* ns)
-{
-  if (flatbuffers::IsFieldPresent(feature, Feature::VT_NAME))
-  {
-    uint64_t word_hash = all->example_parser->hasher(feature->name()->c_str(), feature->name()->size(), _c_hash);
-    fs.push_back(feature->value(), word_hash);
-    if ((all->audit || all->hash_inv) && ns != nullptr)
-    { fs.space_names.push_back(audit_strings(ns->c_str(), feature->name()->c_str())); }
-  }
-  else
-  {
-    fs.push_back(feature->value(), feature->hash());
-  }
-}
+// void parser::parse_features(VW::workspace* all, features& fs, const Feature* feature, const flatbuffers::String* ns)
+// {
+//   if (flatbuffers::IsFieldPresent(feature, Feature::VT_NAME))
+//   {
+//     uint64_t word_hash = all->example_parser->hasher(feature->name()->c_str(), feature->name()->size(), _c_hash);
+//     fs.push_back(feature->value(), word_hash);
+//     if ((all->audit || all->hash_inv) && ns != nullptr)
+//     { fs.space_names.push_back(audit_strings(ns->c_str(), feature->name()->c_str())); }
+//   }
+//   else
+//   {
+//     fs.push_back(feature->value(), feature->hash());
+//   }
+// }
 
 void parser::parse_flat_label(shared_data* sd, example* ae, const Example* eg, VW::io::logger& logger)
 {

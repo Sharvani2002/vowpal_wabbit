@@ -31,6 +31,17 @@ target_include_directories(vw_fb_parser PUBLIC ${FLATBUFFERS_INCLUDE_DIR})
 #     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 # endif()
 
+
+# find_library(
+#   to_flatbuff
+#   NAMES to_flatbuff
+#   )
+
+# vw_add_test_executable(
+#   FOR_LIB "fb_parser"
+#   SOURCES "tests/flatbuffer_parser_test.cc"
+#   EXTRA_DEPS vw_core to_flatbuff
+# )
 vw_add_test_executable(
   FOR_LIB "fb_parser"
   SOURCES "tests/flatbuffer_parser_test.cc"

@@ -1,0 +1,110 @@
+[
+    {
+      "id": 1,
+      "desc": "Flatbuffer Simple Label Test",
+      "vw_command": "-k -l 20 --initial_t 128000 --power_t 1 -d train-sets/0001.fb -f models/0001_1.model --invariant --flatbuffer --ngram 3 --skips 1 --holdout_off",
+      "diff_files": {
+        "stderr": "train-sets/ref/0001_fb.stderr",
+        "stdout": "train-sets/ref/0001_fb.stdout"
+      },
+      "input_files": [
+        "train-sets/0001.fb"
+      ]
+    },
+    {
+      "id": 2,
+      "desc": "Flatbuffer CB Label Test",
+      "vw_command": "--cb_force_legacy --cb 2 -d train-sets/rcv1_raw_cb_small.fb --flatbuffer",
+      "diff_files": {
+        "stderr": "train-sets/ref/rcv1_raw_cb_fb.stderr",
+        "stdout": "train-sets/ref/rcv1_raw_cb_fb.stdout"
+      },
+      "input_files": [
+        "train-sets/rcv1_raw_cb_small.fb"
+      ]
+    },
+    {
+      "id": 3,
+      "desc": "Flatbuffer Multilabel Test",
+      "vw_command": "--multilabel_oaa 10 -d train-sets/multilabel.fb --flatbuffer",
+      "diff_files": {
+        "stderr": "train-sets/ref/multilabel_fb.stderr",
+        "stdout": "train-sets/ref/multilabel_fb.stdout"
+      },
+      "input_files": [
+        "train-sets/multilabel.fb"
+      ]
+    },
+    {
+      "id": 4,
+      "desc": "Flatbuffer Mutliclass Test",
+      "vw_command": "-d train-sets/multiclass.fb -k --ect 10 --flatbuffer",
+      "diff_files": {
+        "stderr": "train-sets/ref/multiclass_fb.stderr",
+        "stdout": "train-sets/ref/multiclass_fb.stdout"
+      },
+      "input_files": [
+        "train-sets/multiclass.fb"
+      ]
+    },
+    {
+      "id": 5,
+      "desc": "Flatbuffer CS Test",
+      "vw_command": "-k -d train-sets/cs.fb --invariant --csoaa_ldf multiline --flatbuffer",
+      "diff_files": {
+        "stderr": "train-sets/ref/cs_fb.stderr",
+        "stdout": "train-sets/ref/cs_fb.stdout"
+      },
+      "input_files": [
+        "train-sets/cs.fb"
+      ]
+    },
+    {
+      "id": 6,
+      "desc": "Flatbuffer CB_eval test",
+      "vw_command": "-d train-sets/rcv1_cb_eval.fb --cb 2 --eval --flatbuffer",
+      "diff_files": {
+        "stderr": "train-sets/ref/rcv1_cb_eval_fb.stderr",
+        "stdout": "train-sets/ref/rcv1_cb_eval_fb.stdout"
+      },
+      "input_files": [
+        "train-sets/rcv1_cb_eval.fb"
+      ]
+    },
+    {
+      "id": 7,
+      "desc": "Flatbuffer no label Test (LDA)",
+      "vw_command": "-k --lda 100 --lda_alpha 0.01 --lda_rho 0.01 --lda_D 1000 -l 1 -b 13 --minibatch 128 -d train-sets/wiki256_no_label.fb --flatbuffer",
+      "diff_files": {
+        "stderr": "train-sets/ref/no_label_fb.stderr",
+        "stdout": "train-sets/ref/no_label_fb.stdout"
+      },
+      "input_files": [
+        "train-sets/wiki256_no_label.fb"
+      ]
+    },
+    {
+      "id": 8,
+      "desc": "Flatbuffer CCB Label Test",
+      "vw_command": "--ccb_explore_adf -d train-sets/ccb.fb --flatbuffer",
+      "diff_files": {
+        "stderr": "train-sets/ref/ccb_fb.stderr",
+        "stdout": "train-sets/ref/ccb_fb.stdout"
+      },
+      "input_files": [
+        "train-sets/ccb.fb"
+      ]
+    },
+    {
+      "id": 9,
+      "desc": "without -d, training only",
+      "vw_command": "-d train-sets/0002.dat",
+      "diff_files": {
+        "stderr": "fb-test/ref/0001.stderr",
+        "stdout": "fb-test/ref/0001.stdout"
+      },
+      "input_files": [
+        "train-sets/0002.dat"
+      ]
+    }
+  ]

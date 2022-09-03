@@ -60,7 +60,8 @@ int main(int argc, char* argv[])
   std::vector<VW::workspace*> alls;
 
   std::vector<std::string> opts(argv + 1, argv + argc);
-  opts.emplace_back("--quiet");
+  // opts.emplace_back("--quiet");
+  opts.emplace_back("--cache");
 
   std::unique_ptr<options_cli, options_deleter_type> ptr(
       new options_cli(opts), [](VW::config::options_i* ptr) { delete ptr; });

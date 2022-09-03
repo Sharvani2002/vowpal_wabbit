@@ -5345,5 +5345,17 @@
     "depends_on": [
       412
     ]
+  },
+  {
+    "id": 415,
+    "desc": "",
+    "vw_command": "-k -l 20 --initial_t 128000 --power_t 1 -d train-sets/0001.dat -f models/0001_1.model -c --passes 8 --invariant --ngram 3 --skips 1 --holdout_off",
+    "diff_files": {
+      "stderr": "train-sets/ref/000001_fb_test.stderr",
+      "stdout": "train-sets/ref/000001_fb_test.stdout"
+    },
+    "input_files": [
+      "train-sets/0001.dat"
+    ]
   }
 ]
